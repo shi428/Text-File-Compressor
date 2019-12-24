@@ -8,15 +8,17 @@ int main(int argc, char *argv[]) {
   double time_spent = 0.0;
   clock_t begin = clock();
   int compressedBytes = 0;
-  readFile(argv[1]);
+  unsigned int numBytes = readFile(argv[1]);
   priorityQueue *frequencies = newQueue();
   storeFrequencies(frequencies);
+//  print(frequencies);
   Tree *huffmanTr = buildHuffmanTree(frequencies);
   code *codes = getCodes(huffmanTr);
-/*  for (int i = 0; i < codes->size; i++) {
+  for (int i = 0; i < codes->size; i++) {
     printf("Character %c Code %s\n", codes[i].chr, codes[i].bits);
-  }*/
+    }
   createHeader(huffmanTr, argv[2], &compressedBytes);
+  writeEncodedLength(argv[2], numBytes);
   writeEncodedText(argv[1], argv[2], codes, &compressedBytes);
   freeQueue(frequencies);
   freeTree(huffmanTr);
@@ -30,16 +32,16 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 }
 
-void readFile(char *filename) {
-  FILE *fptr = fopen(filename, "r");
-  if (!fptr) {
+unsigned int readFile(char *filename) {
+  FILE *fin = fopen(filename, "r");
+  if (!fin) {
     fprintf(stderr, "Failed to open %s\n", filename);
-    return ;
+    return EXIT_FAILURE;;
   }
   int ch;
-  int bytes = 0;
+  unsigned int bytes = 0;
   do {
-    ch = fgetc(fptr);
+    ch = fgetc(fin);
     //putchar(ch);
     if (ch != EOF) {
       charFrequency[ch]++;
@@ -47,33 +49,44 @@ void readFile(char *filename) {
     }
   } while (ch != EOF);
   printf("%s contains %d bytes\n", filename, bytes);
-  fclose(fptr);
+  fclose(fin);
+  return bytes;
+}
+
+void writeEncodedLength(char *filename, unsigned int bytes) {
+  FILE *fout = fopen(filename, "ab");
+  fwrite(&bytes, 4, 1, fout);
+  fclose(fout);
 }
 
 int countEncodedBits(char *filename, code *codes) {
-  FILE *fptr = fopen(filename, "r");
-  if (!fptr) {
+  FILE *fin = fopen(filename, "r");
+  if (!fin) {
     fprintf(stderr, "Failed to open %s\n", filename);
   }
   int ch;
   int numBits = 0;
   do {
-    ch = fgetc(fptr);
+    ch = fgetc(fin);
     if (ch != EOF) {
       for (int i = 0; i < codes->size; i++) {
         if (codes[i].chr == ch) {
-//          printf("Character %c Bits %s\n", codes[i].chr, codes[i].bits);
+          //          printf("Character %c Bits %s\n", codes[i].chr, codes[i].bits);
           numBits += strlen((char *)codes[i].bits);
         }
       }
     }
   } while (ch != EOF);
-  fclose(fptr);
+  fclose(fin);
   return numBits;
 }
 
 void writeEncodedText(char *filename, char *filename2, code *codes, int *compressedBytes) {
   unsigned char *bits = malloc(countEncodedBits(filename, codes) + 1);
+  if (!bits) {
+    printf("Failed to allocate memory!");
+    return ;
+  }
   FILE *fin = fopen(filename, "r");
   FILE *fout = fopen(filename2, "ab");
   if (!fin) {
@@ -84,11 +97,13 @@ void writeEncodedText(char *filename, char *filename2, code *codes, int *compres
     fprintf(stderr, "Failed to open %s for writing\n", filename2);
     return ;
   }
-  int counter = 0;
+  unsigned  int counter = 0;
   int ch;
-  int length;
+  unsigned int length;
+  int fuck = 0;
   do {
     ch = fgetc(fin);
+    fuck++;
     if (ch != EOF) {
       for (int i = 0; i < codes->size; i++) {
         if (ch == codes[i].chr) {
@@ -97,10 +112,10 @@ void writeEncodedText(char *filename, char *filename2, code *codes, int *compres
           counter += length;
         }
       }
-    }
+  }
   } while (ch != EOF);
   bits[counter] = '\0';
-//  printf("%s\n", bits);
+  //  printf("%s\n", bits);
   unsigned char byte = 0;
   length = strlen((char *)bits);
   for (int i = 0; i < length; i++) {
@@ -194,7 +209,7 @@ void print(priorityQueue *queue) {
   printf("Queue contains\n");
   int i = queue->front;
   for (int counter = 0; counter < queue->size; counter++) {
-    //  printf("Character %c Frequency %d\n", queue->arr[i].chr, queue->arr[i].freq);
+      printf("Character %c Frequency %d\n", queue->arr[i].chr, queue->arr[i].freq);
     i = (i + 1) % queue->maxSize;
   }
 }
@@ -350,12 +365,13 @@ void createHeader(Tree *tr, char *filename, int *compressedBytes) {
   int ind = 0;
   postOrder(tr->root, header, &ind);
   header[ind] = '\0';
- // printf("%s\n", header);
+  // printf("\n");
+  //  printf("%s\n", header);
   //int bitCount = 0;
   int length = strlen((char *)header);
   unsigned char byte = 0;
   for (int i = 0; i < length; i++) {
-    byte |= header[i] << (7 - (i % 8));
+    byte |= (header[i] - '0') << (7 - (i % 8));
     if ((i + 1) % 8 == 0) {
       (*compressedBytes)++;
       fwrite(&byte, 1, 1, fout);
@@ -371,6 +387,7 @@ void createHeader(Tree *tr, char *filename, int *compressedBytes) {
   byte = '\n';
   fwrite(&byte, 1, 1, fout);
   (*compressedBytes)++;
+    printf("There are %d bytes stored in the header\n", *compressedBytes);
   fclose(fout);
   free(header);
 }
@@ -402,7 +419,6 @@ unsigned char *decToBinary(unsigned char chr) {
   return bits;
 }
 
-
 void postOrder(Node *root, unsigned char *header, int *ind) {
   if (!root) {
     return ;
@@ -411,6 +427,7 @@ void postOrder(Node *root, unsigned char *header, int *ind) {
   postOrder(root->right, header, ind);
   if (!root->left && !root->right) {
     header[(*ind)++] = '1';
+    //   printf("1%c", root->data.chr);
     unsigned char *temp = decToBinary(root->data.chr);
     int length = strlen((char *)temp);
     memcpy(header + (*ind), temp, length);
@@ -419,6 +436,7 @@ void postOrder(Node *root, unsigned char *header, int *ind) {
     return ;
   }
   header[(*ind)++] = '0';
+  //  printf("0");
 }
 
 void swap(void *a,void *b) {

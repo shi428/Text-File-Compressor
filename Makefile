@@ -2,18 +2,26 @@ WARNING = -Wall -Wshadow --pedantic
 VAL = valgrind --leak-check=full --tool=memcheck --log-file=memcheck.txt --show-leak-kinds=all --track-origins=yes --verbose 
 ERROR = -Wvla -Werror
 HEADERS = huffman.h
-SRCS = compress.c
-EXE = compress
-OBJS = $(SRCS:%.c=%.o)
+SRCS1 = compress.c
+SRCS2 = decompress.c
+EXE1 = compress
+EXE2 = decompress
+OBJS1 = $(SRCS1:%.c=%.o)
+OBJS2 = $(SRCS2:%.c=%.o)
 GCC = cc -std=c99 -g $(WARNING) $(ERROR)
-$(EXE): $(OBJS)
-	$(GCC) $(OBJS) -o $(EXE)
-test: $(EXE)
-	./$(EXE) test.in test.out
-testmemory: $(EXE)
-	$(VAL) ./$(EXE) test.in test.out
+$(EXE1): $(OBJS1)
+	$(GCC) $(OBJS1) -o $(EXE1)
+$(EXE2): $(OBJS2)
+	$(GCC) $(OBJS2) -o $(EXE2)
+test: $(EXE1) $(EXE2)
+	./$(EXE1) test.in test.out 
+	./$(EXE2) test.out test
+	diff test test.in
+testmemory: $(EXE1) $(EXE2)
+###	$(VAL) ./$(EXE1) test.in test.out
+	$(VAL) ./$(EXE2) test.out test
 	vim memcheck.txt
 .c.o:
 	$(GCC) -c $*.c
 clean:
-	rm -rf $(EXE) $(OBJS) memcheck.txt
+	rm -rf $(EXE1) $(EXE2) $(OBJS1) $(OBJS2) memcheck.txt
