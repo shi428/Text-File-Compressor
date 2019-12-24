@@ -100,10 +100,8 @@ void writeEncodedText(char *filename, char *filename2, code *codes, int *compres
   unsigned  int counter = 0;
   int ch;
   unsigned int length;
-  int fuck = 0;
   do {
     ch = fgetc(fin);
-    fuck++;
     if (ch != EOF) {
       for (int i = 0; i < codes->size; i++) {
         if (ch == codes[i].chr) {
@@ -353,6 +351,9 @@ int countNodes(Node *root, int counter) {
   return counter;
 }
 
+void writeEncodedHeaderLength(FILE *fout, unsigned short bits) {
+    fwrite(&bits, 2, 1, fout);
+}
 void createHeader(Tree *tr, char *filename, int *compressedBytes) {
   FILE *fout = fopen(filename, "wb");
   if (!fout) {
@@ -369,6 +370,8 @@ void createHeader(Tree *tr, char *filename, int *compressedBytes) {
   //  printf("%s\n", header);
   //int bitCount = 0;
   int length = strlen((char *)header);
+  writeEncodedHeaderLength(fout, (unsigned short) length);
+  printf("There are %i bits in the header\n", length);
   unsigned char byte = 0;
   for (int i = 0; i < length; i++) {
     byte |= (header[i] - '0') << (7 - (i % 8));
@@ -427,7 +430,7 @@ void postOrder(Node *root, unsigned char *header, int *ind) {
   postOrder(root->right, header, ind);
   if (!root->left && !root->right) {
     header[(*ind)++] = '1';
-    //   printf("1%c", root->data.chr);
+       printf("1%c", root->data.chr);
     unsigned char *temp = decToBinary(root->data.chr);
     int length = strlen((char *)temp);
     memcpy(header + (*ind), temp, length);
@@ -436,7 +439,7 @@ void postOrder(Node *root, unsigned char *header, int *ind) {
     return ;
   }
   header[(*ind)++] = '0';
-  //  printf("0");
+    printf("0");
 }
 
 void swap(void *a,void *b) {

@@ -59,6 +59,7 @@ void copyToQueue(element *arr, priorityQueue *queue);
 int countEncodedBits(char *filename, code *codes);
 void writeEncodedText(char *filename, char *filename2, code *codes, int *compressedBytes);
 void writeEncodedLength(char *filename, unsigned int bytes);
+void writeEncodedHeaderLength(FILE *fout, unsigned short bits);
 
 void quickSort(element *arr, int start, int end);
 int partition(element *arr, int start, int end);
@@ -89,10 +90,11 @@ unsigned char *decToBinary(unsigned char chr);
 unsigned char binToDecimal(unsigned char *ptr);
 //decode
 int countBytes(char *filename);
+unsigned short countHeaderBits(char *filename, int *bytes);
 unsigned int bytesInOriginalFile(char *filename, int *bytes);
-unsigned char *readHeader(char *filename, int *bytes);
+unsigned char *readHeader(char *filename, int *bytes, unsigned short headerBits);
 unsigned char *readData(char *filename, int bytes);
-void parseBits(unsigned char *header, List *list);
+void parseBits(unsigned char *header, List *list, unsigned short headerBits);
 List *createList();
 void insert(List *list, ListNode *node, unsigned char *instruction,TreeNode *treeNode);
 void push_back(List *list, unsigned char *leafNode, TreeNode *treeNode);

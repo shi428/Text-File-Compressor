@@ -9,14 +9,15 @@ EXE2 = decompress
 OBJS1 = $(SRCS1:%.c=%.o)
 OBJS2 = $(SRCS2:%.c=%.o)
 GCC = cc -std=c99 -g $(WARNING) $(ERROR)
+run: test
 $(EXE1): $(OBJS1)
 	$(GCC) $(OBJS1) -o $(EXE1)
 $(EXE2): $(OBJS2)
 	$(GCC) $(OBJS2) -o $(EXE2)
 test: $(EXE1) $(EXE2)
-	./$(EXE1) test.in test.out 
+	./$(EXE1) compress.c test.out 
 	./$(EXE2) test.out test
-	diff test test.in
+	diff test compress.c
 testmemory: $(EXE1) $(EXE2)
 ###	$(VAL) ./$(EXE1) test.in test.out
 	$(VAL) ./$(EXE2) test.out test

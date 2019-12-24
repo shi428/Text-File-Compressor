@@ -8,12 +8,11 @@ int main(int argc, char *argv[]) {
   double time_spent = 0.0;
   clock_t begin = clock();
   int headerBytes = 0;
-  unsigned char *header = readHeader(argv[1], &headerBytes);
+  unsigned short headerBits= countHeaderBits(argv[1], &headerBytes);
+  unsigned char *header = readHeader(argv[1], &headerBytes, headerBits);
   List *list = createList();
-  parseBits(header, list);
+  parseBits(header, list, headerBits);
   Tree *huffmanTree = buildTree(list);
-  clock_t end = clock();
-  time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
   printf("Time elapsed is %f seconds\n", time_spent);
   code *codes = getCodes(huffmanTree);
   for (int i = 0; i < codes->size; i++) {
@@ -22,6 +21,7 @@ int main(int argc, char *argv[]) {
   unsigned int bytes = bytesInOriginalFile(argv[1], &headerBytes);
   unsigned char *data = readData(argv[1], headerBytes);
   decodeMessage(argv[2], data, huffmanTree, bytes);
+  bytes++;
   for (int i = 0; i < codes->size; i++) {
     free(codes[i].bits);
   }
@@ -29,6 +29,8 @@ int main(int argc, char *argv[]) {
   free(header);
   free(data);
   freeTree2(huffmanTree);
+  clock_t end = clock();
+  time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
   return EXIT_SUCCESS;
 }
 
@@ -47,6 +49,15 @@ int countBytes(char *filename) {
   return counter;
 }
 
+unsigned short countHeaderBits(char *filename, int *bytes) {
+  FILE *fin = fopen(filename, "r");
+  unsigned short ret;
+  fread(&ret, 2, 1, fin);
+  (*bytes)+=2;
+  fclose(fin);
+  return ret;
+}
+
 unsigned int bytesInOriginalFile(char *filename, int *bytes) {
   FILE *fin = fopen(filename, "r");
   fseek(fin, *bytes, SEEK_SET);
@@ -57,33 +68,40 @@ unsigned int bytesInOriginalFile(char *filename, int *bytes) {
   return numBytes;
 }
 
-unsigned char *readHeader(char *filename, int *bytes) {
+unsigned char *readHeader(char *filename, int *bytes, unsigned short headerbits) {
   FILE *fin = fopen(filename, "r");
   int ch;
-  int counter = 0;
+  unsigned short counter = 0;
+  fseek(fin, *bytes, SEEK_SET);
+  unsigned short headerBytes;
+  printf("There are %i bits in the header\n", headerbits);
+  if (headerbits % 8) {
+    headerBytes = headerbits / 8 + 2;
+  }
+  else {
+    headerBytes = headerbits /  8 + 1;
+  }
   do {
     ch = fgetc(fin);
-    if (ch != '\n') {
-      counter++;
-    }
-  }while (ch != '\n');
+    counter++;
+  }while (counter < headerBytes);
   unsigned char *bits = malloc(8 * counter + 1);
-  fseek(fin, 0,SEEK_SET);
+  fseek(fin, *bytes, SEEK_SET);
+  counter = 0;
   int offset = 0;
   do {
     ch = fgetc(fin);
-    if (ch != '\n') {
-      unsigned char *temp = decToBinary((unsigned char)ch);
-      int length = strlen((char *)temp);
-      memcpy(bits + offset, temp,  length);
-      offset += length;
-      free(temp);
-    }
-  } while (ch !='\n');
+    unsigned char *temp = decToBinary((unsigned char)ch);
+    int length = strlen((char *)temp);
+    memcpy(bits + offset, temp,  length);
+    offset += length;
+    free(temp);
+    counter++;
+  } while (counter < headerBytes);
   bits[offset] = '\0';
   printf("%s\n", bits);
-  (*bytes) = offset / 8 + 1;
-  printf("There are %d bytes stored in the header\n", *bytes);
+  (*bytes) += headerBytes;
+  printf("There are %d bytes stored in the header\n", headerBytes);
   fclose(fin);
   return bits;
 }
@@ -158,9 +176,9 @@ TreeNode *createNode(unsigned char chr) {
   newNode->right = NULL;
   return newNode;
 }
-void parseBits(unsigned char *header, List *list) {
+void parseBits(unsigned char *header, List *list, unsigned short headerBits) {
   int i = 0;
-  int length = strlen((char *)header);
+  int length = headerBits;
   while (i < length) {
     if (header[i] == '1') {
       unsigned char chr = binToDecimal(&header[i+1]);
@@ -189,28 +207,35 @@ void parseBits(unsigned char *header, List *list) {
 }
 
 TreeNode* pop_node(List *list, ListNode *node) {
+  TreeNode *ret = node->treenode;
   if (node == list->head) {
-    list->head = node->next;
-    if (list->head) {
-      list->head->prev = NULL;
+    if (list->head == list->tail) {
+      list->head = NULL;
+      list->tail = NULL;
+      free(node);
+      return ret;
     }
-    TreeNode *ret = node->treenode;
+    list->head = node->next;
+    list->head->prev = NULL;
     free(node);
     return ret;
   }
   else if (node == list->tail) {
     list->tail = list->tail->prev;
     list->tail->next = NULL;
-    TreeNode *ret = node->treenode;
     free(node);
     return ret;
   }
-  TreeNode *ret = node->treenode;
-  ListNode *next = node->next;
-  ListNode *prev = node->prev;
-  prev->next = next;
-  next->prev = prev;
-  free(node);
+  ListNode *iterator = list->head;
+  while (iterator) {
+    if (iterator->next == node) {
+      ListNode *next = node->next;
+      iterator->next = next;
+      next->prev = iterator;
+      free(node);
+    }
+    iterator = iterator->next;
+  }
   return ret;
 }
 
@@ -241,45 +266,54 @@ void push_back(List *list, unsigned char *instruction, TreeNode *treeNode) {
 void insert(List *list, ListNode *node, unsigned char *instruction, TreeNode *treeNode) {
   ListNode *newNode = malloc(sizeof(ListNode));
   if (instruction) {
-    strcpy((char *)list->tail->headerInstruction, (char *)instruction);
+    strcpy((char *)newNode->headerInstruction, (char *)instruction);
   }
   newNode->treenode = treeNode;
-  if (node) {
-    ListNode *next = node->next;
-    node->next = newNode;
-    newNode->next = next;
-    next->prev = newNode;
-    newNode->prev = node;
-  }
-  else if (!node) {
+  if (!node) {
     ListNode *next = list->head;
     list->head = newNode;
-    list->head->next = next;
-    next->prev = list->head;
+    if (next) {
+      list->head->next = next;
+      next->prev = list->head;
+    }
+    else {
+      list->head->next = NULL;
+    }
+  }
+  ListNode *iterator = list->head;
+  while (iterator) {
+    if (iterator == node) {
+      ListNode *next = iterator->next;
+      node->next= newNode;
+      newNode->prev = node;
+      newNode->next = next;
+      next->prev = newNode;
+    }
+    iterator = iterator->next;
   }
 }
 
 Tree *buildTree(List *list) {
   Tree *huffmanTree = malloc(sizeof(Tree));
   ListNode *iterator = list->head;
-  while (list->head->next->treenode) {
-//    printf("%s\n", (char *)iterator->headerInstruction);
+  while (iterator) {
     ListNode *next = iterator->next;
     if (!strcmp((char *)iterator->headerInstruction,"0")) {
-      ListNode *firstPrev = NULL;
+      ListNode *firstPrev = iterator->prev;
       ListNode *secondPrev = NULL;
       ListNode *thirdPrev = NULL;
-      TreeNode *newNode = createNode(0);
-      if (iterator) {
-        firstPrev = iterator->prev;
-        secondPrev = firstPrev->prev;
-        thirdPrev = secondPrev->prev;
+      if (!firstPrev) {
+        break;
       }
- //     printf("%s %s\n", (char *)secondPrev->headerInstruction, (char *)firstPrev->headerInstruction);
-      insert(list, thirdPrev, NULL, newNode);
-      newNode->left = pop_node(list, secondPrev);
-      newNode->right = pop_node(list,firstPrev);
+      secondPrev = firstPrev->prev;
+      thirdPrev = secondPrev->prev;
+      TreeNode *newNode = createNode(0);
+   //   printf("%s %s\n", (char *)secondPrev->headerInstruction, (char *)firstPrev->headerInstruction);
+
       pop_node(list, iterator);
+      newNode->right = pop_node(list,firstPrev);
+      newNode->left = pop_node(list, secondPrev);
+      insert(list, thirdPrev, NULL, newNode);
       huffmanTree->root2 = newNode;
     }
     iterator = next;
