@@ -24,10 +24,6 @@ void push(priorityQueue * queue, element data) {
 }
 
 element pop(priorityQueue *queue) {
-  if (isEmpty(queue)) {
-    fprintf(stderr, "queue empty!\n");
-    exit(EXIT_FAILURE);
-  }
   int previousFront = queue->front;
   queue->front = (queue->front + 1) % queue->maxSize;
   queue->size--;

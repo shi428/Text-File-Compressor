@@ -40,11 +40,11 @@ void quickSort(element *arr, int start, int end);
 //queue
 priorityQueue *newQueue();
 void push(priorityQueue *queue, element data);
-element pop(priroityQueue *queue);
+element pop(priorityQueue *queue);
 void print(priorityQueue *queue);
-element *copyToArray(priroityQueue *queue);
+element *copyToArray(priorityQueue *queue);
 void copyToQueue(element *arr, priorityQueue *queue);
-void freeQueeu(priorityQueue *queue);
+void freeQueue(priorityQueue *queue);
 
 //tree
 Tree *buildHuffmanTree(priorityQueue *frequencies);
@@ -57,11 +57,11 @@ void freeNodes(Node *root);
 void freeTree(Tree *tr);
 
 //encode
-void writeEncodeLength(char *filename, usnigned int bytes);
+void writeEncodedLength(char *filename, unsigned int bytes);
 int countEncodedBits(char *fielname, code *codes);
-void writeEncodedTExt(char *filename, char *filename2, coede *codes, int *compressedBytes);
+void writeEncodedText(char *filename, char *filename2, code*codes, int *compressedBytes);
 code *getCodes(Tree *Tr);
-void writeEncodedHEaderLenght(FILE *fout, unsigned short bits);
+void writeEncodedHeaderLenghb(FILE *fout, unsigned short bits);
 void createHeader(Tree *tr, char *filename, int *compresedBytes);
 
 //misc

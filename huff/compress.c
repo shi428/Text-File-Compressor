@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include "huffman.h"
-int charFrequency[256] = {0};
+#include "compress.h"
 int main(int argc, char *argv[]) {
   double time_spent = 0.0;
   clock_t begin = clock();
