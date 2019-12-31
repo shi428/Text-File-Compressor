@@ -1,1 +1,2 @@
-*.o
+dehuff/*.o
+huff/*.o
