@@ -96,7 +96,7 @@ void postOrder(Node *root, unsigned char *header, int *ind) {
   postOrder(root->right, header, ind);
   if (!root->left && !root->right) {
     header[(*ind)++] = '1';
-       printf("1%c", root->data.chr);
+       //printf("1%c", root->data.chr);
     unsigned char *temp = decToBinary(root->data.chr);
     int length = strlen((char *)temp);
     memcpy(header + (*ind), temp, length);
@@ -105,7 +105,7 @@ void postOrder(Node *root, unsigned char *header, int *ind) {
     return ;
   }
   header[(*ind)++] = '0';
-    printf("0");
+    //printf("0");
 }
 
 void freeNodes(Node *root) {

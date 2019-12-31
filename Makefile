@@ -17,15 +17,15 @@ $(EXE2): $(OBJS2)
 	mv *.o dehuff
 	$(GCC) $(OBJS2) -o $(EXE2)
 test: $(EXE1) $(EXE2)
-	./$(EXE1) dehuff/decompress.c test.out 
+	./$(EXE1) Makefile test.out 
 	./$(EXE2) test.out test
-	diff test dehuff/decompress.c
+	diff test Makefile
 testmemory: $(EXE1) $(EXE2)
-	$(VAL) ./$(EXE1) decompress.c test.out
+	$(VAL) ./$(EXE1) Makefile test.out
 	vim memcheck.txt
 	$(VAL) ./$(EXE2) test.out test
 	vim memcheck.txt
-.c.o:
+.c.o: $(SRCS1) $(SRCS2)
 	$(GCC) -c $*.c
 clean:
 	rm -rf $(EXE1) $(EXE2) $(OBJS1) $(OBJS2) memcheck.txt

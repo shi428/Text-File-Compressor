@@ -42,7 +42,7 @@ unsigned char *readHeader(char *filename, int *bytes, unsigned short headerbits)
   unsigned short counter = 0;
   fseek(fin, *bytes, SEEK_SET);
   unsigned short headerBytes;
-  printf("There are %i bits in the header\n", headerbits);
+  //printf("There are %i bits in the header\n", headerbits);
   if (headerbits % 8) {
     headerBytes = headerbits / 8 + 2;
   }
@@ -67,9 +67,9 @@ unsigned char *readHeader(char *filename, int *bytes, unsigned short headerbits)
     counter++;
   } while (counter < headerBytes);
   bits[offset] = '\0';
-  printf("%s\n", bits);
+  //printf("%s\n", bits);
   (*bytes) += headerBytes;
-  printf("There are %d bytes stored in the header\n", headerBytes);
+  //printf("There are %d bytes stored in the header\n", headerBytes);
   fclose(fin);
   return bits;
 }
@@ -89,7 +89,7 @@ unsigned char *readData(char *filename, int bytes) {
       offset += length;
       free(temp);
     }
-  }while (ch != EOF);
+  } while (ch != EOF);
   bits[offset] = '\0';
   fclose(fin);
   return bits;

@@ -12,9 +12,9 @@ Tree *buildTree(List *list) {
       ListNode *firstPrev = iterator->prev;
       ListNode *secondPrev = NULL;
       ListNode *thirdPrev = NULL;
-      if (!firstPrev) {
+      /*if (!firstPrev) {
         break;
-      }
+      }*/
       secondPrev = firstPrev->prev;
       thirdPrev = secondPrev->prev;
       TreeNode *newNode = createNode(0);
@@ -22,8 +22,9 @@ Tree *buildTree(List *list) {
       pop_node(list, iterator);
       newNode->right = pop_node(list,firstPrev);
       newNode->left = pop_node(list, secondPrev);
-      insert(list, thirdPrev, NULL, newNode);
+      insert(list, thirdPrev, (unsigned char *)"nde", newNode);
       huffmanTree->root = newNode;
+     // printList(list);
     }
     iterator = next;
   }

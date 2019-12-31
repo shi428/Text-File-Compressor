@@ -35,14 +35,17 @@ void push_back(List *list, unsigned char *instruction, TreeNode *treeNode) {
 }
 
 void insert(List *list, ListNode *node, unsigned char *instruction, TreeNode *treeNode) {
+ // printf("%p\n", (void *)node);
   ListNode *newNode = malloc(sizeof(ListNode));
   if (instruction) {
     strcpy((char *)newNode->headerInstruction, (char *)instruction);
   }
   newNode->treenode = treeNode;
   if (!node) {
+  //  printf("shit\n");
     ListNode *next = list->head;
     list->head = newNode;
+    list->head->prev = NULL;
     if (next) {
       list->head->next = next;
       next->prev = list->head;
@@ -50,6 +53,7 @@ void insert(List *list, ListNode *node, unsigned char *instruction, TreeNode *tr
     else {
       list->head->next = NULL;
     }
+    return ;
   }
   ListNode *iterator = list->head;
   while (iterator) {
@@ -95,6 +99,18 @@ TreeNode* pop_node(List *list, ListNode *node) {
     iterator = iterator->next;
   }
   return ret;
+}
+
+void printList(List *list) {
+  ListNode *iterator = list->head;
+  printf("List contains: ");
+  int size = 0;
+  while (iterator) {
+    printf("%s ", iterator->headerInstruction);
+    iterator = iterator->next;
+    size++;
+  }
+  printf("\nList Size: %d\n", size);
 }
 
 void deleteList(List *list) {

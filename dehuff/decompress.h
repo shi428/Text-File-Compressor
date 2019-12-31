@@ -43,6 +43,7 @@ void push_back(List *list, unsigned char *instruction, TreeNode *treeNode);
 void insert(List *list, ListNode *node, unsigned char *instruction, TreeNode *treeNode);
 TreeNode *pop_node(List *list, ListNode *node);
 void deleteList(List *list);
+void printList(List *list);
 
 //tree
 Tree *buildTree(List *list);

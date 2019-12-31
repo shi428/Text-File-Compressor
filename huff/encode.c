@@ -119,7 +119,7 @@ void createHeader(Tree *tr, char *filename, int *compressedBytes) {
   //int bitCount = 0;
   int length = strlen((char *)header);
   writeEncodedHeaderLength(fout, (unsigned short) length);
-  printf("There are %i bits in the header\n", length);
+  //printf("There are %i bits in the header\n", length);
   unsigned char byte = 0;
   for (int i = 0; i < length; i++) {
     byte |= (header[i] - '0') << (7 - (i % 8));
@@ -138,7 +138,7 @@ void createHeader(Tree *tr, char *filename, int *compressedBytes) {
   byte = '\n';
   fwrite(&byte, 1, 1, fout);
   (*compressedBytes)++;
-    printf("There are %d bytes stored in the header\n", *compressedBytes);
+    //printf("There are %d bytes stored in the header\n", *compressedBytes);
   fclose(fout);
   free(header);
 }

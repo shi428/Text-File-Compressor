@@ -8,7 +8,7 @@ int charFrequency[256] = {0};
 unsigned int readFile(char *filename) {
   FILE *fin = fopen(filename, "r");
   if (!fin) {
-    fprintf(stderr, "Failed to open %s\n", filename);
+    perror("The following error has occured");
     return EXIT_FAILURE;;
   }
   int ch;
@@ -22,6 +22,9 @@ unsigned int readFile(char *filename) {
     }
   } while (ch != EOF);
   printf("%s contains %d bytes\n", filename, bytes);
+  if (bytes == 0) {
+    return EXIT_FAILURE;
+  }
   fclose(fin);
   return bytes;
 }

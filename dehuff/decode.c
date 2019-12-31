@@ -25,12 +25,7 @@ void parseBits(unsigned char *header, List *list, unsigned short headerBits) {
       i++;
     }
   }
-  ListNode *iterator = list->head;
-  while (iterator) {
-    printf("%s", iterator->headerInstruction);
-    iterator = iterator->next;
-  }
-  printf("\n");
+ // printList(list);
 }
 
 void decodeMessage(char *filename, unsigned char *data, Tree *tr, unsigned int numBytes) {
